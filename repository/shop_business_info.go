@@ -1,0 +1,49 @@
+package repository
+
+import (
+	"gitee.com/cristiane/micro-mall-shop/model/mysql"
+	"gitee.com/kelvins-io/kelvins"
+	"xorm.io/xorm"
+)
+
+func CreateShopBusinessInfo(tx *xorm.Session, model *mysql.ShopBusinessInfo) (err error) {
+	_, err = tx.Table(mysql.TableShopBusinessInfo).Insert(model)
+	return
+}
+
+func UpdateShopBusinessInfo(query, maps map[string]interface{}) (err error) {
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).Where(query, maps).Update(maps)
+	return
+}
+
+func GetShopBusinessInfoByShopId(shopId int64) (*mysql.ShopBusinessInfo, error) {
+	var model mysql.ShopBusinessInfo
+	var err error
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).
+		Where("shop_id = ? ", shopId).
+		Get(&model)
+	return &model, err
+}
+
+func GetShopBusinessInfo(tx *xorm.Session, merchantId int, nickName string) (*mysql.ShopBusinessInfo, error) {
+	var model mysql.ShopBusinessInfo
+	var err error
+	_, err = tx.Table(mysql.TableShopBusinessInfo).
+		Select("shop_id,shop_code").
+		Where("legal_person = ? and nick_name = ?", merchantId, nickName).Get(&model)
+	return &model, err
+}
+
+func CheckShopBusinessInfoExist(merchantId int, nickName string) (exist bool, err error) {
+	var model mysql.ShopBusinessInfo
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).
+		Select("shop_id").
+		Where("legal_person = ? and nick_name = ?", merchantId, nickName).Get(&model)
+	if err != nil {
+		return false, err
+	}
+	if model.ShopId > 0 {
+		return true, nil
+	}
+	return false, nil
+}

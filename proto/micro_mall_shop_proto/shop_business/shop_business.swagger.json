@@ -1,0 +1,286 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/micro_mall_shop_proto/shop_business/shop_business.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/shop_business/shop/apply": {
+      "post": {
+        "summary": "提交店铺申请材料",
+        "operationId": "ShopApply",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessShopApplyResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/shop_businessShopApplyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
+    },
+    "/v1/shop_business/shop/material": {
+      "get": {
+        "summary": "获取店铺材料",
+        "operationId": "GetShopMaterial",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessGetShopMaterialResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shop_id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
+    },
+    "/v1/shop_business/shop/pledge": {
+      "put": {
+        "summary": "店铺质押保证金",
+        "operationId": "ShopPledge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessShopPledgeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/shop_businessShopPledgeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "shop_businessCoinType": {
+      "type": "string",
+      "enum": [
+        "CNY",
+        "USD",
+        "HKD",
+        "EUR"
+      ],
+      "default": "CNY"
+    },
+    "shop_businessCommonResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/shop_businessRetCode"
+        },
+        "msg": {
+          "type": "string"
+        }
+      }
+    },
+    "shop_businessGetShopMaterialResponse": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "$ref": "#/definitions/shop_businessShopMaterial"
+        }
+      }
+    },
+    "shop_businessOperationType": {
+      "type": "string",
+      "enum": [
+        "CREATE",
+        "UPDATE",
+        "DELETE",
+        "AUDIT"
+      ],
+      "default": "CREATE"
+    },
+    "shop_businessRetCode": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "ERROR",
+        "USER_NOT_EXIST",
+        "USER_EXIST",
+        "MERCHANT_NOT_EXIST",
+        "MERCHANT_EXIST",
+        "SHOP_NOT_EXIST",
+        "SHOP_EXIST"
+      ],
+      "default": "SUCCESS"
+    },
+    "shop_businessShopApplyRequest": {
+      "type": "object",
+      "properties": {
+        "operation_type": {
+          "$ref": "#/definitions/shop_businessOperationType"
+        },
+        "op_uid": {
+          "type": "string",
+          "format": "int64"
+        },
+        "op_ip": {
+          "type": "string"
+        },
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "merchant_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nick_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "register_addr": {
+          "type": "string"
+        },
+        "business_addr": {
+          "type": "string"
+        },
+        "business_license": {
+          "type": "string"
+        },
+        "tax_card_no": {
+          "type": "string"
+        },
+        "business_desc": {
+          "type": "string"
+        },
+        "social_credit_code": {
+          "type": "string"
+        },
+        "organization_code": {
+          "type": "string"
+        }
+      }
+    },
+    "shop_businessShopApplyResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "shop_businessShopMaterial": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "merchant_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nick_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "register_addr": {
+          "type": "string"
+        },
+        "business_addr": {
+          "type": "string"
+        },
+        "business_license": {
+          "type": "string"
+        },
+        "tax_card_no": {
+          "type": "string"
+        },
+        "business_desc": {
+          "type": "string"
+        },
+        "social_credit_code": {
+          "type": "string"
+        },
+        "organization_code": {
+          "type": "string"
+        }
+      }
+    },
+    "shop_businessShopPledgeRequest": {
+      "type": "object",
+      "properties": {
+        "op_uid": {
+          "type": "string",
+          "format": "int64"
+        },
+        "op_ip": {
+          "type": "string"
+        },
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "coin_type": {
+          "$ref": "#/definitions/shop_businessCoinType"
+        }
+      }
+    },
+    "shop_businessShopPledgeResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
+        "state": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}
