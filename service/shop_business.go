@@ -6,6 +6,7 @@ import (
 	"gitee.com/cristiane/micro-mall-shop/model/mysql"
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
 	"gitee.com/cristiane/micro-mall-shop/pkg/util"
+	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_pay_proto/pay_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_users_proto/users"
 	"gitee.com/cristiane/micro-mall-shop/repository"
@@ -60,10 +61,11 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ShopBusinessExist
 			return
 		}
+		shopCode := uuid.New().String()
 		model := mysql.ShopBusinessInfo{
 			NickName:         req.NickName,
 			FullName:         req.FullName,
-			ShopCode:         uuid.New().String(),
+			ShopCode:         shopCode,
 			RegisterAddr:     req.RegisterAddr,
 			BusinessAddr:     req.BusinessAddr,
 			LegalPerson:      req.MerchantId,
@@ -89,35 +91,37 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-		// 获取店铺信息
-		shopBusinessInfo, err := repository.GetShopBusinessInfo(tx, int(req.MerchantId), req.NickName)
+		serverName := args.RpcServiceMicroMallPay
+		conn, err := util.GetGrpcClient(serverName)
 		if err != nil {
-			tx.Rollback()
-			kelvins.ErrLogger.Errorf(ctx, "GetShopBusinessInfoByMerchantId err: %v, MerchantId: %+v", err, req.MerchantId)
+			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 			retCode = code.ErrorServer
 			return
 		}
-		shopId = shopBusinessInfo.ShopId
+		defer conn.Close()
 
-		account := mysql.Account{
-			AccountCode: uuid.New().String(),
-			Owner:       shopBusinessInfo.ShopCode,
-			Balance:     random.KrandNum(5),
-			CoinType:    1,
-			CoinDesc:    "CNY",
-			State:       0,
-			AccountType: 2,
-			CreateTime:  time.Now(),
-			UpdateTime:  time.Now(),
+		client := pay_business.NewPayBusinessServiceClient(conn)
+		r := pay_business.CreateAccountRequest{
+			Owner:       shopCode,
+			AccountType: pay_business.AccountType_Company,
+			CoinType:    pay_business.CoinType_CNY,
+			Balance:     random.KrandNum(1000),
 		}
-		err = repository.CreateAccount(tx, &account)
+		rsp, err := client.CreateAccount(ctx, &r)
 		if err != nil {
 			tx.Rollback()
-			kelvins.ErrLogger.Errorf(ctx, "CreateAccount err: %v, account: %+v", err, account)
+			kelvins.ErrLogger.Errorf(ctx, "CreateAccount %v,err: %v", serverName, err)
+			retCode = code.ErrorServer
+			return
+		}
+		if rsp == nil || rsp.Common.Code != pay_business.RetCode_SUCCESS {
+			tx.Rollback()
+			kelvins.ErrLogger.Errorf(ctx, "CreateAccount %v,rsp: %+v", serverName, rsp.Common.Msg)
 			retCode = code.ErrorServer
 			return
 		}
 		tx.Commit()
+
 	} else if req.OperationType == shop_business.OperationType_UPDATE {
 		query := map[string]interface{}{}
 		if req.ShopId > 0 {
@@ -152,4 +156,13 @@ func GetShopMaterial(ctx context.Context, shopId int64) (*mysql.ShopBusinessInfo
 		return shopInfo, code.ErrorServer
 	}
 	return shopInfo, code.Success
+}
+
+func GetShopInfoList(ctx context.Context, shopIds []int64) ([]mysql.ShopBusinessInfo, int) {
+	shopInfoList, err := repository.GetShopInfoList(shopIds)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetShopInfo err: %v, shopIds: %+v", err, shopIds)
+		return shopInfoList, code.ErrorServer
+	}
+	return shopInfoList, code.Success
 }

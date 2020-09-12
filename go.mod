@@ -22,5 +22,6 @@ require (
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.31.0
 	google.golang.org/grpc/examples v0.0.0-20200826230536-d31b6710005d // indirect
+	google.golang.org/protobuf v1.25.0
 	xorm.io/xorm v1.0.3
 )

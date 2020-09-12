@@ -25,6 +25,13 @@ func GetShopBusinessInfoByShopId(shopId int64) (*mysql.ShopBusinessInfo, error) 
 	return &model, err
 }
 
+func GetShopInfoList(shopIds []int64) ([]mysql.ShopBusinessInfo, error) {
+	var result = make([]mysql.ShopBusinessInfo, 0)
+	var err error
+	err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).In("shop_id", shopIds).Find(&result)
+	return result, err
+}
+
 func GetShopBusinessInfo(tx *xorm.Session, merchantId int, nickName string) (*mysql.ShopBusinessInfo, error) {
 	var model mysql.ShopBusinessInfo
 	var err error

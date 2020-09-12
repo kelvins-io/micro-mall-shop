@@ -14,12 +14,18 @@
     "/v1/shop_business/shop/apply": {
       "post": {
         "summary": "提交店铺申请材料",
-        "operationId": "ShopApply",
+        "operationId": "ShopBusinessService_ShopApply",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/shop_businessShopApplyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -38,15 +44,57 @@
         ]
       }
     },
+    "/v1/shop_business/shop/info": {
+      "get": {
+        "summary": "获取店铺数据",
+        "operationId": "ShopBusinessService_GetShopInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessGetShopInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shop_ids",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
+    },
     "/v1/shop_business/shop/material": {
       "get": {
         "summary": "获取店铺材料",
-        "operationId": "GetShopMaterial",
+        "operationId": "ShopBusinessService_GetShopMaterial",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/shop_businessGetShopMaterialResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -67,12 +115,18 @@
     "/v1/shop_business/shop/pledge": {
       "put": {
         "summary": "店铺质押保证金",
-        "operationId": "ShopPledge",
+        "operationId": "ShopBusinessService_ShopPledge",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/shop_businessShopPledgeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -93,6 +147,39 @@
     }
   },
   "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
     "shop_businessCoinType": {
       "type": "string",
       "enum": [
@@ -114,9 +201,26 @@
         }
       }
     },
+    "shop_businessGetShopInfoResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
+        "info_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/shop_businessShopInfo"
+          }
+        }
+      }
+    },
     "shop_businessGetShopMaterialResponse": {
       "type": "object",
       "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
         "material": {
           "$ref": "#/definitions/shop_businessShopMaterial"
         }
@@ -208,6 +312,25 @@
         }
       }
     },
+    "shop_businessShopInfo": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "merchant_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "shop_code": {
+          "type": "string"
+        }
+      }
+    },
     "shop_businessShopMaterial": {
       "type": "object",
       "properties": {
@@ -244,6 +367,9 @@
           "type": "string"
         },
         "organization_code": {
+          "type": "string"
+        },
+        "shop_code": {
           "type": "string"
         }
       }

@@ -53,13 +53,20 @@ func (s *ShopBusinessServer) ShopPledge(ctx context.Context, req *shop_business.
 
 func (s *ShopBusinessServer) GetShopMaterial(ctx context.Context, req *shop_business.GetShopMaterialRequest) (*shop_business.GetShopMaterialResponse, error) {
 	var result shop_business.GetShopMaterialResponse
+	result.Common = &shop_business.CommonResponse{
+		Code: 0,
+		Msg:  "",
+	}
 	result.Material = &shop_business.ShopMaterial{}
 	shopInfo, retCode := service.GetShopMaterial(ctx, req.ShopId)
 	if retCode != code.Success {
-		return &result, errcode.TogRPCError(code.ErrorServer)
+		result.Common.Code = shop_business.RetCode_ERROR
+		result.Common.Msg = errcode.GetErrMsg(code.ErrorServer)
+		return &result, nil
 	}
 
 	result.Material = &shop_business.ShopMaterial{
+		ShopCode:         shopInfo.ShopCode,
 		ShopId:           shopInfo.ShopId,
 		MerchantId:       shopInfo.LegalPerson,
 		NickName:         shopInfo.NickName,
@@ -71,6 +78,32 @@ func (s *ShopBusinessServer) GetShopMaterial(ctx context.Context, req *shop_busi
 		BusinessDesc:     shopInfo.BusinessDesc,
 		SocialCreditCode: shopInfo.SocialCreditCode,
 		OrganizationCode: shopInfo.OrganizationCode,
+	}
+
+	return &result, nil
+}
+
+func (s *ShopBusinessServer) GetShopInfo(ctx context.Context, req *shop_business.GetShopInfoRequest) (*shop_business.GetShopInfoResponse, error) {
+	var result shop_business.GetShopInfoResponse
+	result.Common = &shop_business.CommonResponse{
+		Code: shop_business.RetCode_SUCCESS,
+		Msg:  "",
+	}
+	shopInfoList, retCode := service.GetShopInfoList(ctx, req.ShopIds)
+	if retCode != code.Success {
+		result.Common.Code = shop_business.RetCode_ERROR
+		result.Common.Msg = errcode.GetErrMsg(code.ErrorServer)
+		return &result, nil
+	}
+	result.InfoList = make([]*shop_business.ShopInfo, len(shopInfoList))
+	for i := 0; i < len(shopInfoList); i++ {
+		shopInfo := &shop_business.ShopInfo{
+			ShopId:     shopInfoList[i].ShopId,
+			MerchantId: shopInfoList[i].LegalPerson,
+			FullName:   shopInfoList[i].FullName,
+			ShopCode:   shopInfoList[i].ShopCode,
+		}
+		result.InfoList[i] = shopInfo
 	}
 
 	return &result, nil

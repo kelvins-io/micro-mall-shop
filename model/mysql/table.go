@@ -6,11 +6,10 @@ import (
 )
 
 const (
-	TableConfigKvStore    = "qqq"
-	TableUser             = "user_info"
-	TableMerchantInfo     = "merchant_info"
+	TableUser             = "user"
+	TableMerchantInfo     = "merchant"
 	TableVerifyCodeRecord = "verify_code_record"
-	TableShopBusinessInfo = "shop_business_info"
+	TableShopBusinessInfo = "shop_business"
 	TableAccount          = "account"
 )
 
