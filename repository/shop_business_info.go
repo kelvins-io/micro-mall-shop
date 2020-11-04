@@ -12,7 +12,12 @@ func CreateShopBusinessInfo(tx *xorm.Session, model *mysql.ShopBusinessInfo) (er
 }
 
 func UpdateShopBusinessInfo(query, maps map[string]interface{}) (err error) {
-	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).Where(query, maps).Update(maps)
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).Where(query).Update(maps)
+	return
+}
+
+func DeleteShopBusinessInfo(query interface{}) (err error) {
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).Delete(query)
 	return
 }
 
@@ -32,12 +37,12 @@ func GetShopInfoList(shopIds []int64) ([]mysql.ShopBusinessInfo, error) {
 	return result, err
 }
 
-func GetShopBusinessInfo(tx *xorm.Session, merchantId int, nickName string) (*mysql.ShopBusinessInfo, error) {
+func GetShopBusinessInfo(shopCode string) (*mysql.ShopBusinessInfo, error) {
 	var model mysql.ShopBusinessInfo
 	var err error
-	_, err = tx.Table(mysql.TableShopBusinessInfo).
+	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).
 		Select("shop_id,shop_code").
-		Where("legal_person = ? and nick_name = ?", merchantId, nickName).Get(&model)
+		Where("shop_code = ?", shopCode).Get(&model)
 	return &model, err
 }
 
