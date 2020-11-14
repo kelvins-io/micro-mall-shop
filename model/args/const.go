@@ -1,7 +1,7 @@
 package args
 
 const (
-	RpcServiceMicroMallUsers = "micro-mall-users"
-	RpcServiceMicroMallShop  = "micro-mall-shop"
-	RpcServiceMicroMallPay   = "micro-mall-pay"
+	RpcServiceMicroMallUsers  = "micro-mall-users"
+	RpcServiceMicroMallSearch = "micro-mall-search"
+	RpcServiceMicroMallPay    = "micro-mall-pay"
 )

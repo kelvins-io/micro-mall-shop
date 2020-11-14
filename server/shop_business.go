@@ -109,3 +109,36 @@ func (s *ShopBusinessServer) GetShopInfo(ctx context.Context, req *shop_business
 
 	return &result, nil
 }
+
+func (s *ShopBusinessServer) SearchSyncShop(ctx context.Context, req *shop_business.SearchSyncShopRequest) (*shop_business.SearchSyncShopResponse, error) {
+	result := &shop_business.SearchSyncShopResponse{
+		Common: &shop_business.CommonResponse{
+			Code: shop_business.RetCode_SUCCESS,
+		},
+		List: nil,
+	}
+	list, retCode := service.SearchShopSync(ctx, req.ShopId, int(req.PageSize), int(req.PageNum))
+	if retCode != code.Success {
+		result.Common.Code = shop_business.RetCode_ERROR
+		return result, nil
+	}
+	result.List = list
+	return result, nil
+}
+
+func (s *ShopBusinessServer) SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (*shop_business.SearchShopResponse, error) {
+	result := &shop_business.SearchShopResponse{
+		Common: &shop_business.CommonResponse{
+			Code: shop_business.RetCode_SUCCESS,
+		},
+		List: nil,
+	}
+	list, retCode := service.SearchShop(ctx, req)
+	if retCode != code.Success {
+		result.Common.Code = shop_business.RetCode_ERROR
+		return result, nil
+	}
+	result.List = list
+	return result, nil
+
+}

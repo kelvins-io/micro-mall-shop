@@ -24,16 +24,25 @@ func DeleteShopBusinessInfo(query interface{}) (err error) {
 func GetShopBusinessInfoByShopId(shopId int64) (*mysql.ShopBusinessInfo, error) {
 	var model mysql.ShopBusinessInfo
 	var err error
-	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).
-		Where("shop_id = ? ", shopId).
-		Get(&model)
+	session := kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo)
+	if shopId > 0 {
+		session = session.Where("shop_id = ? ", shopId)
+	}
+	_, err = session.Get(&model)
 	return &model, err
 }
 
-func GetShopInfoList(shopIds []int64) ([]mysql.ShopBusinessInfo, error) {
+func GetShopInfoList(shopIds []int64, pageSize, pageNum int) ([]mysql.ShopBusinessInfo, error) {
 	var result = make([]mysql.ShopBusinessInfo, 0)
 	var err error
-	err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).In("shop_id", shopIds).Find(&result)
+	session := kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo)
+	if len(shopIds) > 0 {
+		session = session.In("shop_id", shopIds)
+	}
+	if pageSize > 0 && pageNum >= 1 {
+		session = session.Limit(pageSize, (pageNum-1)*pageSize)
+	}
+	err = session.Find(&result)
 	return result, err
 }
 

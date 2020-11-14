@@ -7,12 +7,14 @@ import (
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
 	"gitee.com/cristiane/micro-mall-shop/pkg/util"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_pay_proto/pay_business"
+	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_users_proto/users"
 	"gitee.com/cristiane/micro-mall-shop/repository"
 	"gitee.com/kelvins-io/common/errcode"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -197,11 +199,120 @@ func GetShopMaterial(ctx context.Context, shopId int64) (*mysql.ShopBusinessInfo
 	return shopInfo, code.Success
 }
 
+func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([]*shop_business.SearchSyncShopEntry, int) {
+	result := make([]*shop_business.SearchSyncShopEntry, 0)
+	var shopIds []int64
+	if shopId > 0 {
+		shopIds = append(shopIds, shopId)
+	}
+	shopInfoList, err := repository.GetShopInfoList(shopIds, pageSize, pageNum)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "SearchShopSync err: %v, shopId: %+v", err, shopId)
+		return result, code.ErrorServer
+	}
+	result = make([]*shop_business.SearchSyncShopEntry, len(shopInfoList))
+	for i := 0; i < len(shopInfoList); i++ {
+		entry := &shop_business.SearchSyncShopEntry{
+			ShopId:       shopInfoList[i].ShopId,
+			NickName:     shopInfoList[i].NickName,
+			FullName:     shopInfoList[i].FullName,
+			ShopCode:     shopInfoList[i].ShopCode,
+			RegisterAddr: shopInfoList[i].RegisterAddr,
+			BusinessAddr: shopInfoList[i].BusinessAddr,
+			BusinessDesc: shopInfoList[i].BusinessDesc,
+		}
+		result[i] = entry
+	}
+	return result, code.Success
+}
+
 func GetShopInfoList(ctx context.Context, shopIds []int64) ([]mysql.ShopBusinessInfo, int) {
-	shopInfoList, err := repository.GetShopInfoList(shopIds)
+	shopInfoList, err := repository.GetShopInfoList(shopIds, 0, 0)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetShopInfo err: %v, shopIds: %+v", err, shopIds)
 		return shopInfoList, code.ErrorServer
 	}
 	return shopInfoList, code.Success
+}
+
+func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (result []*shop_business.SearchShopInfo, retCode int) {
+	result = make([]*shop_business.SearchShopInfo, 0)
+	retCode = code.Success
+	serverName := args.RpcServiceMicroMallSearch
+	conn, err := util.GetGrpcClient(serverName)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
+		retCode = code.ErrorServer
+		return
+	}
+	defer conn.Close()
+	client := search_business.NewSearchBusinessServiceClient(conn)
+	searchReq := search_business.ShopSearchRequest{
+		ShopKey: req.Keyword,
+	}
+	searchRsp, err := client.ShopSearch(ctx, &searchReq)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "ShopSearch %v,err: %v", serverName, err)
+		retCode = code.ErrorServer
+		return
+	}
+	if searchRsp.Common.Code != search_business.RetCode_SUCCESS {
+		kelvins.ErrLogger.Errorf(ctx, "ShopSearch %v,err: %v, req: %+v, rsp: %+v", serverName, err, searchReq, searchRsp)
+		retCode = code.ErrorServer
+		return
+	}
+	if len(searchRsp.List) == 0 {
+		return
+	}
+	shopIds := make([]int64, 0)
+	for i := 0; i < len(searchRsp.List); i++ {
+		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "ShopSearch  ParseInt %v,err: %v, shopId: %s", serverName, err, searchRsp.List[i].ShopId)
+			retCode = code.ErrorServer
+		}
+		if shopId > 0 {
+			shopIds = append(shopIds, shopId)
+		}
+	}
+	shopList, retCode := GetShopInfoList(ctx, shopIds)
+	if retCode != code.Success {
+		return
+	}
+	if len(shopList) == 0 {
+		return
+	}
+	shopIdToInfo := map[int64]mysql.ShopBusinessInfo{}
+	for i := 0; i < len(shopList); i++ {
+		shopIdToInfo[shopList[i].ShopId] = shopList[i]
+	}
+	result = make([]*shop_business.SearchShopInfo, len(shopList))
+	for i := 0; i < len(searchRsp.List); i++ {
+		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "SearchShop ParseInt err: %v, shopId: %v", err, searchRsp.List[i].ShopId)
+			retCode = code.ErrorServer
+			return
+		}
+		entry := &shop_business.SearchShopInfo{
+			Info: &shop_business.ShopMaterial{
+				ShopId:           shopIdToInfo[shopId].ShopId,
+				MerchantId:       shopIdToInfo[shopId].LegalPerson,
+				NickName:         shopIdToInfo[shopId].NickName,
+				FullName:         shopIdToInfo[shopId].FullName,
+				RegisterAddr:     shopIdToInfo[shopId].RegisterAddr,
+				BusinessAddr:     shopIdToInfo[shopId].BusinessAddr,
+				BusinessLicense:  shopIdToInfo[shopId].BusinessLicense,
+				TaxCardNo:        shopIdToInfo[shopId].TaxCardNo,
+				BusinessDesc:     shopIdToInfo[shopId].BusinessDesc,
+				SocialCreditCode: shopIdToInfo[shopId].SocialCreditCode,
+				OrganizationCode: shopIdToInfo[shopId].OrganizationCode,
+				ShopCode:         shopIdToInfo[shopId].ShopCode,
+			},
+			Score: searchRsp.List[i].Score,
+		}
+		result[i] = entry
+	}
+
+	return result, retCode
 }

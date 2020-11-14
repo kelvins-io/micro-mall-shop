@@ -144,6 +144,83 @@
           "ShopBusinessService"
         ]
       }
+    },
+    "/v1/shop_business/shop/search": {
+      "get": {
+        "summary": "搜索店铺",
+        "operationId": "ShopBusinessService_SearchShop",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessSearchShopResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
+    },
+    "/v1/shop_business/shop/search/sync": {
+      "get": {
+        "summary": "搜索同步店铺数据",
+        "operationId": "ShopBusinessService_SearchSyncShop",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/shop_businessSearchSyncShopResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shop_id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "page_num",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ShopBusinessService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -249,6 +326,73 @@
         "SHOP_EXIST"
       ],
       "default": "SUCCESS"
+    },
+    "shop_businessSearchShopInfo": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "$ref": "#/definitions/shop_businessShopMaterial"
+        },
+        "score": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "shop_businessSearchShopResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/shop_businessSearchShopInfo"
+          }
+        }
+      }
+    },
+    "shop_businessSearchSyncShopEntry": {
+      "type": "object",
+      "properties": {
+        "shop_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nick_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "shop_code": {
+          "type": "string"
+        },
+        "register_addr": {
+          "type": "string"
+        },
+        "business_addr": {
+          "type": "string"
+        },
+        "business_desc": {
+          "type": "string"
+        }
+      }
+    },
+    "shop_businessSearchSyncShopResponse": {
+      "type": "object",
+      "properties": {
+        "common": {
+          "$ref": "#/definitions/shop_businessCommonResponse"
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/shop_businessSearchSyncShopEntry"
+          }
+        }
+      }
     },
     "shop_businessShopApplyRequest": {
       "type": "object",
