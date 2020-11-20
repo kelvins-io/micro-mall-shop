@@ -19,7 +19,6 @@ func (s *ShopBusinessServer) ShopApply(ctx context.Context, req *shop_business.S
 	var result = shop_business.ShopApplyResponse{
 		Common: &shop_business.CommonResponse{
 			Code: shop_business.RetCode_SUCCESS,
-			Msg:  "",
 		},
 		ShopId: 0,
 	}
@@ -55,7 +54,7 @@ func (s *ShopBusinessServer) ShopPledge(ctx context.Context, req *shop_business.
 func (s *ShopBusinessServer) GetShopMaterial(ctx context.Context, req *shop_business.GetShopMaterialRequest) (*shop_business.GetShopMaterialResponse, error) {
 	var result shop_business.GetShopMaterialResponse
 	result.Common = &shop_business.CommonResponse{
-		Code: 0,
+		Code: shop_business.RetCode_SUCCESS,
 		Msg:  "",
 	}
 	result.Material = &shop_business.ShopMaterial{}
