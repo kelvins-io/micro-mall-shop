@@ -46,11 +46,11 @@ func GetShopInfoList(shopIds []int64, pageSize, pageNum int) ([]mysql.ShopBusine
 	return result, err
 }
 
-func GetShopBusinessInfo(shopCode string) (*mysql.ShopBusinessInfo, error) {
+func GetShopBusinessInfo(sqlSelect, shopCode string) (*mysql.ShopBusinessInfo, error) {
 	var model mysql.ShopBusinessInfo
 	var err error
 	_, err = kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).
-		Select("shop_id,shop_code").
+		Select(sqlSelect).
 		Where("shop_code = ?", shopCode).Get(&model)
 	return &model, err
 }

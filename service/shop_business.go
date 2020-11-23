@@ -30,7 +30,6 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		defer conn.Close()
-
 		client := users.NewMerchantsServiceClient(conn)
 		merchantReq := users.GetMerchantsMaterialRequest{
 			MaterialId: req.MerchantId,
@@ -118,7 +117,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			Owner:       shopCode,
 			AccountType: pay_business.AccountType_Company,
 			CoinType:    pay_business.CoinType_CNY,
-			Balance:     "999999.9999",
+			Balance:     "9999999999.9999",
 		}
 		rsp, err := client.CreateAccount(ctx, &accountReq)
 		if err != nil {
@@ -145,7 +144,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-		shopInfo, err := repository.GetShopBusinessInfo(shopCode)
+		shopInfo, err := repository.GetShopBusinessInfo("shop_id", shopCode)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "GetShopBusinessInfo err: %v, shopCode: %v", err, shopCode)
 			retCode = code.ErrorServer
@@ -286,7 +285,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	for i := 0; i < len(shopList); i++ {
 		shopIdToInfo[shopList[i].ShopId] = shopList[i]
 	}
-	result = make([]*shop_business.SearchShopInfo, len(shopList))
+	result = make([]*shop_business.SearchShopInfo, len(searchRsp.List))
 	for i := 0; i < len(searchRsp.List); i++ {
 		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
 		if err != nil {
