@@ -204,7 +204,7 @@ func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([
 	if shopId > 0 {
 		shopIds = append(shopIds, shopId)
 	}
-	shopInfoList, err := repository.GetShopInfoList(shopIds, pageSize, pageNum)
+	shopInfoList, err := repository.GetShopInfoList("*", shopIds, pageSize, pageNum)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "SearchShopSync err: %v, shopId: %+v", err, shopId)
 		return result, code.ErrorServer
@@ -226,7 +226,7 @@ func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([
 }
 
 func GetShopInfoList(ctx context.Context, shopIds []int64) ([]mysql.ShopBusinessInfo, int) {
-	shopInfoList, err := repository.GetShopInfoList(shopIds, 0, 0)
+	shopInfoList, err := repository.GetShopInfoList("*", shopIds, 0, 0)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetShopInfo err: %v, shopIds: %+v", err, shopIds)
 		return shopInfoList, code.ErrorServer
@@ -314,4 +314,38 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	}
 
 	return result, retCode
+}
+
+const sqlSelectShopMajorInfo = "shop_id,nick_name,shop_code,state"
+
+func GetShopMajorInfo(ctx context.Context, req *shop_business.GetShopMajorInfoRequest) (result []*shop_business.ShopMajorInfo, retCode int) {
+	retCode = code.Success
+	shopInfoList, err := repository.GetShopInfoList(sqlSelectShopMajorInfo, req.ShopIds, 0, 0)
+	result = make([]*shop_business.ShopMajorInfo, len(shopInfoList))
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetShopInfoList err: %v, shopId: %s", err, req.GetShopIds())
+		retCode = code.ErrorServer
+		return
+	}
+	if len(shopInfoList) == 0 {
+		retCode = code.ShopBusinessNotExist
+		return
+	}
+	if len(shopInfoList) != len(req.GetShopIds()) {
+		retCode = code.ShopBusinessNotExist
+		return
+	}
+	for i := 0; i < len(shopInfoList); i++ {
+		if shopInfoList[i].State != 2 {
+			retCode = code.ShopBusinessNotExist
+			return
+		}
+		majorInfo := &shop_business.ShopMajorInfo{
+			ShopId:   shopInfoList[i].ShopId,
+			ShopCode: shopInfoList[i].ShopCode,
+			ShopName: shopInfoList[i].NickName,
+		}
+		result[i] = majorInfo
+	}
+	return
 }

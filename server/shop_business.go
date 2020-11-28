@@ -139,5 +139,26 @@ func (s *ShopBusinessServer) SearchShop(ctx context.Context, req *shop_business.
 	}
 	result.List = list
 	return result, nil
+}
 
+func (s *ShopBusinessServer) GetShopMajorInfo(ctx context.Context, req *shop_business.GetShopMajorInfoRequest) (*shop_business.GetShopMajorInfoResponse, error) {
+	result := &shop_business.GetShopMajorInfoResponse{
+		Common: &shop_business.CommonResponse{
+			Code: shop_business.RetCode_SUCCESS,
+			Msg:  "",
+		},
+		InfoList: nil,
+	}
+	list, retCode := service.GetShopMajorInfo(ctx, req)
+	if retCode != code.Success {
+		switch retCode {
+		case code.ShopBusinessNotExist:
+			result.Common.Code = shop_business.RetCode_SHOP_NOT_EXIST
+		default:
+			result.Common.Code = shop_business.RetCode_ERROR
+		}
+		return result, nil
+	}
+	result.InfoList = list
+	return result, nil
 }

@@ -32,10 +32,10 @@ func GetShopBusinessInfoByShopId(shopId int64) (*mysql.ShopBusinessInfo, error) 
 	return &model, err
 }
 
-func GetShopInfoList(shopIds []int64, pageSize, pageNum int) ([]mysql.ShopBusinessInfo, error) {
+func GetShopInfoList(sqlSelect string, shopIds []int64, pageSize, pageNum int) ([]mysql.ShopBusinessInfo, error) {
 	var result = make([]mysql.ShopBusinessInfo, 0)
 	var err error
-	session := kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo)
+	session := kelvins.XORM_DBEngine.Table(mysql.TableShopBusinessInfo).Select(sqlSelect)
 	if len(shopIds) > 0 {
 		session = session.In("shop_id", shopIds)
 	}
