@@ -14,3 +14,8 @@
 vendor
 etc/app.ini
 micro-mall-shop
+micro-mall-shop.pid
+micro-mall-shop-darwin-amd64
+micro-mall-shop-linux-amd64
+micro-mall-shop-windows-amd64.exe
+micro-mall-shop-windows-amd64
