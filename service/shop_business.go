@@ -264,7 +264,10 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 		return
 	}
 	shopIds := make([]int64, 0)
-	for i := 0; i < len(searchRsp.List); i++ {
+	for i := range searchRsp.List {
+		if searchRsp.List[i].ShopId == "" {
+			continue
+		}
 		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "ShopSearch  ParseInt %v,err: %v, shopId: %s", serverName, err, searchRsp.List[i].ShopId)
@@ -285,13 +288,16 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	for i := 0; i < len(shopList); i++ {
 		shopIdToInfo[shopList[i].ShopId] = shopList[i]
 	}
-	result = make([]*shop_business.SearchShopInfo, len(searchRsp.List))
-	for i := 0; i < len(searchRsp.List); i++ {
+	result = make([]*shop_business.SearchShopInfo, 0, len(searchRsp.List))
+	for i := range searchRsp.List {
 		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "SearchShop ParseInt err: %v, shopId: %v", err, searchRsp.List[i].ShopId)
 			retCode = code.ErrorServer
 			return
+		}
+		if _, ok := shopIdToInfo[shopId]; !ok {
+			continue
 		}
 		entry := &shop_business.SearchShopInfo{
 			Info: &shop_business.ShopMaterial{
@@ -310,7 +316,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 			},
 			Score: searchRsp.List[i].Score,
 		}
-		result[i] = entry
+		result = append(result, entry)
 	}
 
 	return result, retCode
