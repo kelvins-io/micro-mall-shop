@@ -2,15 +2,17 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"gitee.com/cristiane/micro-mall-shop/model/args"
 	"gitee.com/cristiane/micro-mall-shop/model/mysql"
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
 	"gitee.com/cristiane/micro-mall-shop/pkg/util"
+	"gitee.com/cristiane/micro-mall-shop/pkg/util/email"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_pay_proto/pay_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_shop_proto/shop_business"
-	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_users_proto/users"
 	"gitee.com/cristiane/micro-mall-shop/repository"
+	"gitee.com/cristiane/micro-mall-shop/vars"
 	"gitee.com/kelvins-io/common/errcode"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
@@ -21,34 +23,6 @@ import (
 
 func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest) (shopId int64, retCode int) {
 	retCode = code.Success
-	if req.MerchantId > 0 {
-		serverName := args.RpcServiceMicroMallUsers
-		conn, err := util.GetGrpcClient(serverName)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-			retCode = code.ErrorServer
-			return
-		}
-		defer conn.Close()
-		client := users.NewMerchantsServiceClient(conn)
-		merchantReq := users.GetMerchantsMaterialRequest{
-			MaterialId: req.MerchantId,
-		}
-		rsp, err := client.GetMerchantsMaterial(ctx, &merchantReq)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetMerchantsMaterial %v,err: %v", serverName, err)
-			retCode = code.ErrorServer
-			return
-		}
-		if rsp == nil || rsp.Common.Code != users.RetCode_SUCCESS {
-			retCode = code.ErrorServer
-			return
-		}
-		if rsp.Info == nil || rsp.Info.MaterialId <= 0 {
-			retCode = code.MerchantNotExist
-			return
-		}
-	}
 	if req.OperationType == shop_business.OperationType_CREATE {
 		// 创建账户前检查是为了防止数据表没有唯一性检查
 		exist, err := repository.CheckShopBusinessInfoExist(int(req.MerchantId), req.NickName)
@@ -62,7 +36,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		shopCode := uuid.New().String()
-		model := mysql.ShopBusinessInfo{
+		shopInfo := mysql.ShopBusinessInfo{
 			NickName:         req.NickName,
 			FullName:         req.FullName,
 			ShopCode:         shopCode,
@@ -74,7 +48,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			BusinessDesc:     req.BusinessDesc,
 			SocialCreditCode: req.SocialCreditCode,
 			OrganizationCode: req.OrganizationCode,
-			State:            0,
+			State:            2, // 线上流程禁止
 			CreateTime:       time.Now(),
 			UpdateTime:       time.Now(),
 		}
@@ -86,7 +60,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		// 创建店铺账户
-		err = repository.CreateShopBusinessInfo(tx, &model)
+		err = repository.CreateShopBusinessInfo(tx, &shopInfo)
 		if err != nil {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
@@ -96,7 +70,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 				retCode = code.ShopBusinessExist
 				return
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo err: %v, model: %+v", err, model)
+			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo err: %v, shopInfo: %+v", err, shopInfo)
 			retCode = code.ErrorServer
 			return
 		}
@@ -113,11 +87,12 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		}
 		defer conn.Close()
 		client := pay_business.NewPayBusinessServiceClient(conn)
+		balance := "1.9999"
 		accountReq := pay_business.CreateAccountRequest{
 			Owner:       shopCode,
 			AccountType: pay_business.AccountType_Company,
 			CoinType:    pay_business.CoinType_CNY,
-			Balance:     "9999999999.9999",
+			Balance:     balance,
 		}
 		rsp, err := client.CreateAccount(ctx, &accountReq)
 		if err != nil {
@@ -129,7 +104,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-		if rsp == nil || rsp.Common.Code != pay_business.RetCode_SUCCESS {
+		if rsp.Common.Code != pay_business.RetCode_SUCCESS {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
@@ -144,13 +119,24 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-		shopInfo, err := repository.GetShopBusinessInfo("shop_id", shopCode)
+		shopIdInfo, err := repository.GetShopBusinessInfo("shop_id", shopCode)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "GetShopBusinessInfo err: %v, shopCode: %v", err, shopCode)
 			retCode = code.ErrorServer
 			return
 		}
-		shopId = shopInfo.ShopId
+		shopId = shopIdInfo.ShopId
+		vars.GPool.SendJob(func() {
+			// 发送登录邮件
+			emailNotice := fmt.Sprintf(args.UserApplyShopTemplate, req.MerchantId, time.Now().String(), req.FullName, balance)
+			for _, receiver := range vars.EmailNoticeSetting.Receivers {
+				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				if err != nil {
+					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+					return
+				}
+			}
+		})
 	} else if req.OperationType == shop_business.OperationType_UPDATE {
 		shopId = req.ShopId
 		query := map[string]interface{}{}
@@ -173,10 +159,25 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
+
+		vars.GPool.SendJob(func() {
+			// 发送登录邮件
+			emailNotice := fmt.Sprintf(args.UserModifyShopTemplate, req.MerchantId, time.Now().String(), req.FullName)
+			for _, receiver := range vars.EmailNoticeSetting.Receivers {
+				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				if err != nil {
+					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+					return
+				}
+			}
+		})
 	} else if req.OperationType == shop_business.OperationType_DELETE {
 		shopId = req.ShopId
 		where := map[string]interface{}{
 			"shop_id": req.ShopId,
+		}
+		if req.MerchantId > 0 {
+			where["legal_person"] = req.MerchantId
 		}
 		err := repository.DeleteShopBusinessInfo(where)
 		if err != nil {
@@ -184,6 +185,18 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
+
+		vars.GPool.SendJob(func() {
+			// 发送登录邮件
+			emailNotice := fmt.Sprintf(args.UserCloseShopTemplate, req.MerchantId, time.Now().String(), req.ShopId)
+			for _, receiver := range vars.EmailNoticeSetting.Receivers {
+				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				if err != nil {
+					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+					return
+				}
+			}
+		})
 		return
 	}
 	return
@@ -343,7 +356,7 @@ func GetShopMajorInfo(ctx context.Context, req *shop_business.GetShopMajorInfoRe
 	}
 	for i := 0; i < len(shopInfoList); i++ {
 		if shopInfoList[i].State != 2 {
-			retCode = code.ShopBusinessNotExist
+			retCode = code.ShopBusinessStateNotVerify
 			return
 		}
 		majorInfo := &shop_business.ShopMajorInfo{

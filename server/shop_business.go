@@ -20,7 +20,6 @@ func (s *ShopBusinessServer) ShopApply(ctx context.Context, req *shop_business.S
 		Common: &shop_business.CommonResponse{
 			Code: shop_business.RetCode_SUCCESS,
 		},
-		ShopId: 0,
 	}
 	var shopId int64
 	var retCode int
@@ -130,7 +129,6 @@ func (s *ShopBusinessServer) SearchShop(ctx context.Context, req *shop_business.
 		Common: &shop_business.CommonResponse{
 			Code: shop_business.RetCode_SUCCESS,
 		},
-		List: nil,
 	}
 	list, retCode := service.SearchShop(ctx, req)
 	if retCode != code.Success {
@@ -145,7 +143,6 @@ func (s *ShopBusinessServer) GetShopMajorInfo(ctx context.Context, req *shop_bus
 	result := &shop_business.GetShopMajorInfoResponse{
 		Common: &shop_business.CommonResponse{
 			Code: shop_business.RetCode_SUCCESS,
-			Msg:  "",
 		},
 		InfoList: nil,
 	}
@@ -154,6 +151,8 @@ func (s *ShopBusinessServer) GetShopMajorInfo(ctx context.Context, req *shop_bus
 		switch retCode {
 		case code.ShopBusinessNotExist:
 			result.Common.Code = shop_business.RetCode_SHOP_NOT_EXIST
+		case code.ShopBusinessStateNotVerify:
+			result.Common.Code = shop_business.RetCode_SHOP_STATE_NOT_VERIFY
 		default:
 			result.Common.Code = shop_business.RetCode_ERROR
 		}
