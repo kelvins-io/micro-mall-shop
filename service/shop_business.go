@@ -75,7 +75,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		serverName := args.RpcServiceMicroMallPay
-		conn, err := util.GetGrpcClient(serverName)
+		conn, err := util.GetGrpcClient(ctx,serverName)
 		if err != nil {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
@@ -251,7 +251,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	result = make([]*shop_business.SearchShopInfo, 0)
 	retCode = code.Success
 	serverName := args.RpcServiceMicroMallSearch
-	conn, err := util.GetGrpcClient(serverName)
+	conn, err := util.GetGrpcClient(ctx, serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		retCode = code.ErrorServer
@@ -303,6 +303,9 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	}
 	result = make([]*shop_business.SearchShopInfo, 0, len(searchRsp.List))
 	for i := range searchRsp.List {
+		if searchRsp.List[i].ShopId == "" {
+			continue
+		}
 		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "SearchShop ParseInt err: %v, shopId: %v", err, searchRsp.List[i].ShopId)
