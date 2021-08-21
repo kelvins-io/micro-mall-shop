@@ -85,7 +85,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-		defer conn.Close()
+		//defer conn.Close()
 		client := pay_business.NewPayBusinessServiceClient(conn)
 		balance := "1.9999"
 		accountReq := pay_business.CreateAccountRequest{
@@ -257,7 +257,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 		retCode = code.ErrorServer
 		return
 	}
-	defer conn.Close()
+	//defer conn.Close()
 	client := search_business.NewSearchBusinessServiceClient(conn)
 	searchReq := search_business.ShopSearchRequest{
 		ShopKey: req.Keyword,
