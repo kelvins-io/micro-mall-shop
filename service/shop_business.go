@@ -14,6 +14,7 @@ import (
 	"gitee.com/cristiane/micro-mall-shop/repository"
 	"gitee.com/cristiane/micro-mall-shop/vars"
 	"gitee.com/kelvins-io/common/errcode"
+	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
 	"strconv"
@@ -70,7 +71,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 				retCode = code.ShopBusinessExist
 				return
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo err: %v, shopInfo: %+v", err, shopInfo)
+			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo err: %v, shopInfo: %v", err, json.MarshalToStringNoError(shopInfo))
 			retCode = code.ErrorServer
 			return
 		}
@@ -109,7 +110,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			if errRollback != nil {
 				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
 			}
-			kelvins.ErrLogger.Errorf(ctx, "CreateAccount %v,rsp: %+v", serverName, rsp.Common.Msg)
+			kelvins.ErrLogger.Errorf(ctx, "CreateAccount req %v,rsp: %v", json.MarshalToStringNoError(req), json.MarshalToStringNoError(rsp))
 			retCode = code.ErrorServer
 			return
 		}
@@ -155,7 +156,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		}
 		err := repository.UpdateShopBusinessInfo(query, maps)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "UpdateShopBusinessInfo err: %v, query: %+v, maps: %+v", err, query, maps)
+			kelvins.ErrLogger.Errorf(ctx, "UpdateShopBusinessInfo err: %v, query: %v, maps: %v", err, json.MarshalToStringNoError(query), json.MarshalToStringNoError(maps))
 			retCode = code.ErrorServer
 			return
 		}
@@ -181,7 +182,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		}
 		err := repository.DeleteShopBusinessInfo(where)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "DeleteShopBusinessInfo err: %v, where: %+v", err, where)
+			kelvins.ErrLogger.Errorf(ctx, "DeleteShopBusinessInfo err: %v, where: %v", err, json.MarshalToStringNoError(where))
 			retCode = code.ErrorServer
 			return
 		}
@@ -205,7 +206,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 func GetShopMaterial(ctx context.Context, shopId int64) (*mysql.ShopBusinessInfo, int) {
 	shopInfo, err := repository.GetShopBusinessInfoByShopId(shopId)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetShopBusinessInfoByShopId err: %v, shopId: %+v", err, shopId)
+		kelvins.ErrLogger.Errorf(ctx, "GetShopBusinessInfoByShopId err: %v, shopId: %v", err, shopId)
 		return shopInfo, code.ErrorServer
 	}
 	return shopInfo, code.Success
@@ -219,7 +220,7 @@ func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([
 	}
 	shopInfoList, err := repository.GetShopInfoList("*", shopIds, pageSize, pageNum)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "SearchShopSync err: %v, shopId: %+v", err, shopId)
+		kelvins.ErrLogger.Errorf(ctx, "SearchShopSync err: %v, shopId: %v", err, shopId)
 		return result, code.ErrorServer
 	}
 	result = make([]*shop_business.SearchSyncShopEntry, len(shopInfoList))
@@ -241,7 +242,7 @@ func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([
 func GetShopInfoList(ctx context.Context, shopIds []int64) ([]mysql.ShopBusinessInfo, int) {
 	shopInfoList, err := repository.GetShopInfoList("*", shopIds, 0, 0)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetShopInfo err: %v, shopIds: %+v", err, shopIds)
+		kelvins.ErrLogger.Errorf(ctx, "GetShopInfo err: %v, shopIds: %v", err, json.MarshalToStringNoError(shopIds))
 		return shopInfoList, code.ErrorServer
 	}
 	return shopInfoList, code.Success
@@ -269,7 +270,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 		return
 	}
 	if searchRsp.Common.Code != search_business.RetCode_SUCCESS {
-		kelvins.ErrLogger.Errorf(ctx, "ShopSearch %v,err: %v, req: %+v, rsp: %+v", serverName, err, searchReq, searchRsp)
+		kelvins.ErrLogger.Errorf(ctx, "ShopSearch  req: %+v, rsp: %+v", json.MarshalToStringNoError(searchReq), json.MarshalToStringNoError(searchRsp))
 		retCode = code.ErrorServer
 		return
 	}
@@ -283,7 +284,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 		}
 		shopId, err := strconv.ParseInt(searchRsp.List[i].ShopId, 10, 64)
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "ShopSearch  ParseInt %v,err: %v, shopId: %s", serverName, err, searchRsp.List[i].ShopId)
+			kelvins.ErrLogger.Errorf(ctx, "ShopSearch  ParseInt err: %v, shopId: %s", err, searchRsp.List[i].ShopId)
 			retCode = code.ErrorServer
 		}
 		if shopId > 0 {
