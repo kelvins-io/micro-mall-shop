@@ -3,8 +3,8 @@ module gitee.com/cristiane/micro-mall-shop
 go 1.13
 
 require (
-	gitee.com/kelvins-io/common v1.1.2
-	gitee.com/kelvins-io/kelvins v1.5.2
+	gitee.com/kelvins-io/common v1.1.3
+	gitee.com/kelvins-io/kelvins v1.5.3
 	github.com/DATA-DOG/godog v0.7.13 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v2.0.0+incompatible
