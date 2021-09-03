@@ -28,6 +28,10 @@ Password = "xxxx"
 DB = 1
 PoolNum = 10
 
+[kelvins-gpool]
+WorkerNum = 10
+JobChanLen = 1000
+
 [email-config]
 User = "xxxx@qq.com"
 Password = "xxxx"

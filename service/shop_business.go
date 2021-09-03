@@ -127,7 +127,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		shopId = shopIdInfo.ShopId
-		vars.GPool.SendJob(func() {
+		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserApplyShopTemplate, req.MerchantId, time.Now().String(), req.FullName, balance)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
@@ -161,7 +161,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 
-		vars.GPool.SendJob(func() {
+		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserModifyShopTemplate, req.MerchantId, time.Now().String(), req.FullName)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
@@ -187,7 +187,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 
-		vars.GPool.SendJob(func() {
+		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserCloseShopTemplate, req.MerchantId, time.Now().String(), req.ShopId)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
