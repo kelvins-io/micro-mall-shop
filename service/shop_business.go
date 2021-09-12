@@ -76,7 +76,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		serverName := args.RpcServiceMicroMallPay
-		conn, err := util.GetGrpcClient(ctx,serverName)
+		conn, err := util.GetGrpcClient(ctx, serverName)
 		if err != nil {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
@@ -131,7 +131,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserApplyShopTemplate, req.MerchantId, time.Now().String(), req.FullName, balance)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
 				if err != nil {
 					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
 					return
@@ -165,7 +165,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserModifyShopTemplate, req.MerchantId, time.Now().String(), req.FullName)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
 				if err != nil {
 					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
 					return
@@ -191,7 +191,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserCloseShopTemplate, req.MerchantId, time.Now().String(), req.ShopId)
 			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, vars.App.Name, emailNotice)
+				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
 				if err != nil {
 					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
 					return

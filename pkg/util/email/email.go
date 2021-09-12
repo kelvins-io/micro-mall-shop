@@ -10,16 +10,16 @@ import (
 )
 
 type SendRequest struct {
-	Receivers []string `json:"receivers"`
-	Subject   string   `json:"subject"`
-	Message   string   `json:"message"`
+	Receivers []string
+	Subject   string
+	Message   string
 }
 
 type Config struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Host     string `json:"host"`
-	Port     string `json:"port"`
+	User     string
+	Password string
+	Host     string
+	Port     string
 }
 
 type Client struct {
