@@ -130,11 +130,13 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserApplyShopTemplate, req.MerchantId, time.Now().String(), req.FullName, balance)
-			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-				if err != nil {
-					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-					return
+			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
+				for _, receiver := range vars.EmailNoticeSetting.Receivers {
+					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
+					if err != nil {
+						kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+						return
+					}
 				}
 			}
 		})
@@ -164,13 +166,16 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserModifyShopTemplate, req.MerchantId, time.Now().String(), req.FullName)
-			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-				if err != nil {
-					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-					return
+			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
+				for _, receiver := range vars.EmailNoticeSetting.Receivers {
+					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
+					if err != nil {
+						kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+						return
+					}
 				}
 			}
+
 		})
 	} else if req.OperationType == shop_business.OperationType_DELETE {
 		shopId = req.ShopId
@@ -190,11 +195,13 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		kelvins.GPool.SendJob(func() {
 			// 发送登录邮件
 			emailNotice := fmt.Sprintf(args.UserCloseShopTemplate, req.MerchantId, time.Now().String(), req.ShopId)
-			for _, receiver := range vars.EmailNoticeSetting.Receivers {
-				err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-				if err != nil {
-					kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-					return
+			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
+				for _, receiver := range vars.EmailNoticeSetting.Receivers {
+					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
+					if err != nil {
+						kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
+						return
+					}
 				}
 			}
 		})

@@ -35,6 +35,7 @@ WorkerNum = 10
 JobChanLen = 1000
 
 [email-config]
+Enable = false
 User = "xxxx@qq.com"
 Password = "xxxx"
 Host = "smtp.qq.com"
