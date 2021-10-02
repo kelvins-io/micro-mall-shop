@@ -40,6 +40,18 @@ Password = "xxxx"
 DB = 1
 PoolNum = 10
 
+[shop-info-search-notice]
+Broker = "amqp://micro-mall:szJ9aePR@127.0.0.1:5672/micro-mall"
+DefaultQueue = "shop_info_search_notice"
+ResultBackend = "redis://xxx@127.0.0.1:6379/8"
+ResultsExpireIn = 3600
+Exchange = "shop_info_search_notice"
+ExchangeType = "direct"
+BindingKey = "shop_info_search_notice"
+PrefetchCount = 3
+TaskRetryCount = 3
+TaskRetryTimeout = 3600
+
 [kelvins-gpool]
 WorkerNum = 10
 JobChanLen = 1000
