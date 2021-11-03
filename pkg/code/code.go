@@ -5,6 +5,7 @@ import "gitee.com/kelvins-io/common/errcode"
 const (
 	Success                    = 29000000
 	ErrorServer                = 29000001
+	TransactionFailed          = 29000002
 	UserNotExist               = 29000005
 	UserExist                  = 29000006
 	DBDuplicateEntry           = 29000007
@@ -21,6 +22,7 @@ func init() {
 	dict := map[int]string{
 		Success:                    "OK",
 		ErrorServer:                "服务器错误",
+		TransactionFailed:          "事务执行失败",
 		UserNotExist:               "用户不存在",
 		DBDuplicateEntry:           "Duplicate entry",
 		UserExist:                  "已存在用户记录，请勿重复创建",

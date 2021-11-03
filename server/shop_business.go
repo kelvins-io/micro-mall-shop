@@ -28,19 +28,16 @@ func (s *ShopBusinessServer) ShopApply(ctx context.Context, req *shop_business.S
 	if retCode != code.Success {
 		if retCode == code.ShopBusinessExist {
 			result.Common.Code = shop_business.RetCode_SHOP_EXIST
-			result.Common.Msg = errcode.GetErrMsg(code.ShopBusinessExist)
 		} else if retCode == code.ShopBusinessNotExist {
 			result.Common.Code = shop_business.RetCode_SHOP_NOT_EXIST
-			result.Common.Msg = errcode.GetErrMsg(code.ShopBusinessNotExist)
 		} else if retCode == code.MerchantNotExist {
 			result.Common.Code = shop_business.RetCode_MERCHANT_NOT_EXIST
-			result.Common.Msg = errcode.GetErrMsg(code.MerchantNotExist)
 		} else if retCode == code.MerchantExist {
 			result.Common.Code = shop_business.RetCode_MERCHANT_EXIST
-			result.Common.Msg = errcode.GetErrMsg(code.MerchantExist)
+		} else if retCode == code.TransactionFailed {
+			result.Common.Code = shop_business.RetCode_TRANSACTION_FAILED
 		} else {
 			result.Common.Code = shop_business.RetCode_ERROR
-			result.Common.Msg = errcode.GetErrMsg(code.ErrorServer)
 		}
 	}
 	return &result, nil

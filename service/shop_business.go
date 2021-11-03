@@ -54,17 +54,22 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		tx := kelvins.XORM_DBEngine.NewSession()
 		err = tx.Begin()
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo NewSession err: %v", err)
+			kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Begin err: %v", err)
 			retCode = code.ErrorServer
 			return
 		}
+		defer func() {
+			if retCode != code.Success {
+				err := tx.Rollback()
+				if err != nil {
+					kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", err)
+					return
+				}
+			}
+		}()
 		// 创建店铺账户
 		err = repository.CreateShopBusinessInfo(tx, &shopInfo)
 		if err != nil {
-			errRollback := tx.Rollback()
-			if errRollback != nil {
-				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
-			}
 			if strings.Contains(err.Error(), errcode.GetErrMsg(code.DBDuplicateEntry)) {
 				retCode = code.ShopBusinessExist
 				return
@@ -76,10 +81,6 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		serverName := args.RpcServiceMicroMallPay
 		conn, err := util.GetGrpcClient(ctx, serverName)
 		if err != nil {
-			errRollback := tx.Rollback()
-			if errRollback != nil {
-				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
-			}
 			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 			retCode = code.ErrorServer
 			return
@@ -95,19 +96,11 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		}
 		rsp, err := client.CreateAccount(ctx, &accountReq)
 		if err != nil {
-			errRollback := tx.Rollback()
-			if errRollback != nil {
-				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
-			}
 			kelvins.ErrLogger.Errorf(ctx, "CreateAccount %v,err: %v", serverName, err)
 			retCode = code.ErrorServer
 			return
 		}
 		if rsp.Common.Code != pay_business.RetCode_SUCCESS {
-			errRollback := tx.Rollback()
-			if errRollback != nil {
-				kelvins.ErrLogger.Errorf(ctx, "CreateShopBusinessInfo Rollback err: %v", errRollback)
-			}
 			kelvins.ErrLogger.Errorf(ctx, "CreateAccount req %v,rsp: %v", json.MarshalToStringNoError(req), json.MarshalToStringNoError(rsp))
 			retCode = code.ErrorServer
 			return
@@ -115,7 +108,7 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 		err = tx.Commit()
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "Commit err: %v", err)
-			retCode = code.ErrorServer
+			retCode = code.TransactionFailed
 			return
 		}
 		shopIdInfo, err := repository.GetShopBusinessInfo("shop_id", shopCode)

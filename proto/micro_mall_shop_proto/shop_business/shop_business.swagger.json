@@ -368,6 +368,7 @@
       "enum": [
         "SUCCESS",
         "ERROR",
+        "TRANSACTION_FAILED",
         "USER_NOT_EXIST",
         "USER_EXIST",
         "MERCHANT_NOT_EXIST",

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"gitee.com/cristiane/micro-mall-shop/model/args"
 	"gitee.com/cristiane/micro-mall-shop/model/mysql"
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
@@ -14,6 +15,7 @@ import (
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
 	"strconv"
+	"time"
 )
 
 func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([]*shop_business.SearchSyncShopEntry, int) {
@@ -53,6 +55,26 @@ func GetShopInfoList(ctx context.Context, shopIds []int64) ([]mysql.ShopBusiness
 }
 
 func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (result []*shop_business.SearchShopInfo, retCode int) {
+	retCode = code.Success
+	result = make([]*shop_business.SearchShopInfo, 0)
+	searchKey := "micro-mall-shop:search-shop:" + req.GetKeyword()
+	err := vars.G2CacheEngine.Get(searchKey, 120, &result, func() (interface{}, error) {
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancel()
+		list, ret := searchShop(ctx, req)
+		if ret != code.Success {
+			return &list, fmt.Errorf("searchShop ret %v", ret)
+		}
+		return &list, nil
+	})
+	if err != nil {
+		retCode = code.ErrorServer
+		return
+	}
+	return
+}
+
+func searchShop(ctx context.Context, req *shop_business.SearchShopRequest) (result []*shop_business.SearchShopInfo, retCode int) {
 	result = make([]*shop_business.SearchShopInfo, 0)
 	retCode = code.Success
 	serverName := args.RpcServiceMicroMallSearch
