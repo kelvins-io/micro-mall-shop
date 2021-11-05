@@ -58,7 +58,7 @@ func SearchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	retCode = code.Success
 	result = make([]*shop_business.SearchShopInfo, 0)
 	searchKey := "micro-mall-shop:search-shop:" + req.GetKeyword()
-	err := vars.G2CacheEngine.Get(searchKey, 120, &result, func() (interface{}, error) {
+	err := kelvins.G2CacheEngine.Get(searchKey, 120, &result, func() (interface{}, error) {
 		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 		defer cancel()
 		list, ret := searchShop(ctx, req)
