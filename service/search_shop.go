@@ -3,6 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
+
 	"gitee.com/cristiane/micro-mall-shop/model/args"
 	"gitee.com/cristiane/micro-mall-shop/model/mysql"
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
@@ -10,12 +13,8 @@ import (
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_search_proto/search_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-shop/repository"
-	"gitee.com/cristiane/micro-mall-shop/vars"
 	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
-	"github.com/google/uuid"
-	"strconv"
-	"time"
 )
 
 func SearchShopSync(ctx context.Context, shopId int64, pageSize, pageNum int) ([]*shop_business.SearchSyncShopEntry, int) {
@@ -163,18 +162,4 @@ func searchShop(ctx context.Context, req *shop_business.SearchShopRequest) (resu
 	}
 
 	return result, retCode
-}
-
-func shopInfoNoticeSearchNotice(info *args.SearchStoreShop) {
-	var msg = &args.CommonBusinessMsg{
-		Type:    args.ShopInfoSearchNoticeType,
-		Tag:     "店铺搜索通知",
-		UUID:    uuid.New().String(),
-		Content: json.MarshalToStringNoError(info),
-	}
-	kelvins.GPool.SendJob(func() {
-		var ctx = context.TODO()
-		vars.ShopInfoSearchNoticePusher.PushMessage(ctx, msg)
-	})
-	return
 }

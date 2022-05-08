@@ -2,22 +2,20 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"strings"
+	"time"
+
 	"gitee.com/cristiane/micro-mall-shop/model/args"
 	"gitee.com/cristiane/micro-mall-shop/model/mysql"
 	"gitee.com/cristiane/micro-mall-shop/pkg/code"
 	"gitee.com/cristiane/micro-mall-shop/pkg/util"
-	"gitee.com/cristiane/micro-mall-shop/pkg/util/email"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_pay_proto/pay_business"
 	"gitee.com/cristiane/micro-mall-shop/proto/micro_mall_shop_proto/shop_business"
 	"gitee.com/cristiane/micro-mall-shop/repository"
-	"gitee.com/cristiane/micro-mall-shop/vars"
 	"gitee.com/kelvins-io/common/errcode"
 	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/google/uuid"
-	"strings"
-	"time"
 )
 
 func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest) (shopId int64, retCode int) {
@@ -118,30 +116,17 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 		shopId = shopIdInfo.ShopId
-		kelvins.GPool.SendJob(func() {
-			// 发送登录邮件
-			var err error
-			var ctx = context.TODO()
-			emailNotice := fmt.Sprintf(args.UserApplyShopTemplate, req.MerchantId, time.Now().String(), req.FullName, balance)
-			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
-				for _, receiver := range vars.EmailNoticeSetting.Receivers {
-					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-					if err != nil {
-						kelvins.ErrLogger.Errorf(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-						return
-					}
-				}
-			}
-		})
-
-		shopInfoNoticeSearchNotice(&args.SearchStoreShop{
-			ShopId:       req.GetShopId(),
-			NickName:     req.GetNickName(),
-			FullName:     req.GetFullName(),
-			ShopCode:     shopCode,
-			RegisterAddr: req.GetRegisterAddr(),
-			BusinessAddr: req.GetBusinessAddr(),
-			BusinessDesc: req.GetBusinessDesc(),
+		shopInfoEventNotice(&args.ShopEventNotice{
+			ShopId:        shopIdInfo.ShopId,
+			MerchantId:    req.MerchantId,
+			NickName:      req.GetNickName(),
+			FullName:      req.GetFullName(),
+			ShopCode:      shopCode,
+			ChargeBalance: balance,
+			OperationType: req.OperationType,
+			RegisterAddr:  req.GetRegisterAddr(),
+			BusinessAddr:  req.GetBusinessAddr(),
+			BusinessDesc:  req.GetBusinessDesc(),
 		})
 	} else if req.OperationType == shop_business.OperationType_UPDATE {
 		shopId = req.ShopId
@@ -165,28 +150,15 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			retCode = code.ErrorServer
 			return
 		}
-
-		kelvins.GPool.SendJob(func() {
-			// 发送登录邮件
-			emailNotice := fmt.Sprintf(args.UserModifyShopTemplate, req.MerchantId, time.Now().String(), req.FullName)
-			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
-				for _, receiver := range vars.EmailNoticeSetting.Receivers {
-					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-					if err != nil {
-						kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-						return
-					}
-				}
-			}
-		})
-
-		shopInfoNoticeSearchNotice(&args.SearchStoreShop{
-			ShopId:       req.GetShopId(),
-			NickName:     req.GetNickName(),
-			FullName:     req.GetFullName(),
-			RegisterAddr: req.GetRegisterAddr(),
-			BusinessAddr: req.GetBusinessAddr(),
-			BusinessDesc: req.GetBusinessDesc(),
+		shopInfoEventNotice(&args.ShopEventNotice{
+			OperationType: req.OperationType,
+			MerchantId:    req.MerchantId,
+			ShopId:        req.GetShopId(),
+			NickName:      req.GetNickName(),
+			FullName:      req.GetFullName(),
+			RegisterAddr:  req.GetRegisterAddr(),
+			BusinessAddr:  req.GetBusinessAddr(),
+			BusinessDesc:  req.GetBusinessDesc(),
 		})
 	} else if req.OperationType == shop_business.OperationType_DELETE {
 		shopId = req.ShopId
@@ -203,18 +175,10 @@ func CreateShopBusiness(ctx context.Context, req *shop_business.ShopApplyRequest
 			return
 		}
 
-		kelvins.GPool.SendJob(func() {
-			// 发送登录邮件
-			emailNotice := fmt.Sprintf(args.UserCloseShopTemplate, req.MerchantId, time.Now().String(), req.ShopId)
-			if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
-				for _, receiver := range vars.EmailNoticeSetting.Receivers {
-					err = email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-					if err != nil {
-						kelvins.ErrLogger.Info(ctx, "SendEmailNotice err %v, emailNotice: %v", err, emailNotice)
-						return
-					}
-				}
-			}
+		shopInfoEventNotice(&args.ShopEventNotice{
+			MerchantId:    req.MerchantId,
+			OperationType: req.OperationType,
+			ShopId:        req.GetShopId(),
 		})
 		return
 	}

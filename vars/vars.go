@@ -8,7 +8,6 @@ import (
 
 var (
 	EmailConfigSetting          *EmailConfigSettingS
-	EmailNoticeSetting          *EmailNoticeSettingS
 	ShopInfoSearchNoticeSetting *setting.QueueAMQPSettingS
 	ShopInfoSearchNoticeServer  *queue.MachineryQueue
 	ShopInfoSearchNoticePusher  *queue_helper.PublishService
